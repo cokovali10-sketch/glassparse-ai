@@ -1,0 +1,7 @@
+# Ignore artefacts so docker build context stays small and reproducible.
+bin/
+*.test
+*.exe
+.idea/
+.vscode/
+**/*.md
