@@ -1,156 +1,159 @@
 <div align="center">
 
-# 🧊 GlassParse AI
+# GlassParse AI
 
-**Super-efficient, layout-resilient AI web parser** that converts any website into
-clean **Markdown + structured JSON** for RAG pipelines, LLMs and vector databases.
+**Layout-resilient web parser that converts any website into clean Markdown + structured JSON for RAG pipelines, LLMs, and vector databases**
 
-[![Go](https://img.shields.io/badge/Go-%231.22+-00ADD8.svg?&logo=go&logoColor=white)](engine/)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](python/)
-[![Kotlin](https://img.shields.io/badge/Kotlin-Compose_MP-7F52FF?logo=kotlin&logoColor=white)](desktop/)
-[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
-[![RAG](https://img.shields.io/badge/RAG-Qdrant·Chroma-a855f7?logo=qdrant&logoColor=white)](python/glassparse/vector.py)
+[![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go&logoColor=white)](https://go.dev)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-Compose_MP-7F52FF?logo=kotlin&logoColor=white)](https://kotlinlang.org)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://docker.com)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen?logo=githubactions&logoColor=white)](.github/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-2ea44f)](LICENSE)
 
 </div>
 
-## What it is
+---
 
-A hybrid `fetch → clean → extract → chunk` pipeline:
+A hybrid `fetch → clean → extract → chunk` pipeline that turns any web page into LLM-ready content — immune to ads, scripts, and layout noise.
 
-- a fast, low-memory **Go engine**, immune to ads/scripts/nav noise,
-- a **Self-Healing extractor** that survives layout+class changes,
-- a **Smart RAG-Chunker** (H1–H4) ready for vector DBs,
-- an **anti-bot fetcher** with static → headless switching,
-- an async **Python SDK** and a **glassmorphic Compose dashboard**.
+## What It Does
 
-```ascii
+```
 ┌──────────┐   ┌───────────────┐   ┌───────────────┐   ┌──────────────┐
 │ Fetcher  │──▶│ DOM Cleaner   │──▶│  Extractor    │──▶│ RAG Chunker  │
-│ anti-bot │   │ →Markdown/JSON│   │  self-healing │   │  H1..H4      │
-│ http (Go)│   └───────────────┘   └──────┬────────┘   └──────┬───────┘
-│ headless │                             │ chunks            │ vectors
-└──────────┘                             ▼                   ▼
-                                  ┌──────────────┐    ┌──────────────────┐
-                                  │ GlassDesktop │    │ Qdrant / Chroma  │
-                                  └──────────────┘    └──────────────────┘
-                                 Python SDK (asyncio) ────────────┘
+│ anti-bot │   │ → Markdown    │   │  self-healing │   │  H1–H4 aware │
+│ http/    │   │   + HTML      │   │  text-density │   │  provenance  │
+│ headless │   └───────────────┘   └──────┬────────┘   └──────┬───────┘
+└──────────┘                             │ chunks            │ vectors
+                                         ▼                   ▼
+                                   ┌──────────────┐    ┌──────────────────┐
+                                   │  JSON / CLI  │    │ Qdrant / Chroma  │
+                                   └──────────────┘    └──────────────────┘
 ```
 
-## Quick start (one line)
+- **Go engine** — fast, low-memory, immune to ads/scripts/nav noise
+- **Self-Healing Extractor** — survives layout + class changes by scoring blocks on text density + tokens + DOM path (not CSS classes)
+- **Smart RAG Chunker** — heading-aware chunks with provenance metadata, ready for vector DBs
+- **Anti-Bot Fetcher** — UA rotation, proxy support, transparent HTTP → headless switching for SPAs
+- **Python SDK** — async client with CLI and vector DB exporters
+- **Desktop Dashboard** — glassmorphic Compose Multiplatform GUI
+
+---
+
+## Quick Start
 
 ```bash
+# One command — engine + Qdrant for RAG tests
 docker compose up -d --build
+
+# Verify
+curl -s http://localhost:8080/api/healthz
+# => {"status":"ok","version":"0.1.0"}
+
+# Parse a page
+curl -s -X POST "http://localhost:8080/api/parse?url=https://example.com"
 ```
 
-This starts the Go engine on `:8080` and a local **Qdrant** for RAG tests:
+---
+
+## Features
+
+| Feature | Description |
+|---|---|
+| **Hybrid DOM Cleaner** | Strips scripts/styles/SVG/ads/nav/cookie-banners; emits token-efficient Markdown + semantic HTML |
+| **Self-Healing Selector** | Scores blocks by text density + tokens + DOM path — keeps extracting after a redesign |
+| **Smart RAG Chunker** | Heading-aware (H1–H4) chunks with provenance, ready for ChromaDB / Qdrant / JSONL |
+| **Site Crawler** | Concurrent, robots.txt-aware, same-host BFS crawl with fingerprint dedupe |
+| **Main-Text Extraction** | Readability prose extraction — "give me the article" |
+| **Content Fingerprinting** | Layout-stable content hashing for change detection and dedup |
+| **Anti-Bot Fetching** | UA rotation, proxy support, transparent HTTP → headless switch for JS-rendered pages |
+| **Zero-Config CLI** | `python -m glassparse <url> --markdown` — works immediately |
+| **Python SDK** | Async client with vector DB export (Qdrant, Chroma) built in |
+| **Desktop Dashboard** | Glassmorphic Kotlin/Compose UI with live JSON tree, Markdown viewer, crawler panel |
+
+---
+
+## HTTP API
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `POST` | `/api/parse` | Clean + extract + chunk one page (JSON envelope) |
+| `POST` | `/api/crawl` | Crawl a site (robots.txt aware) → pages |
+| `GET` | `/api/main-text` | Dominant prose of a page (readability) |
+| `GET` | `/api/robots` | robots.txt policy: allowed, crawl_delay, sitemaps |
+| `GET` | `/api/fingerprint` | Stable content hash for change detection / dedup |
+| `GET` | `/api/healthz` | Liveness probe |
+| `GET` | `/api/version` | Engine version |
+
+### Examples
 
 ```bash
+# Parse one page (clean + extract + chunk)
 curl -s -X POST "http://localhost:8080/api/parse?url=https://example.com"
-curl -s http://localhost:8080/api/healthz   # => {"status":"ok", ...}
+
+# Crawl a site (robots.txt-aware)
+curl -s -X POST "http://localhost:8080/api/crawl?url=https://example.com&max_pages=20"
+
+# Readability prose + content hash
+curl -s "http://localhost:8080/api/main-text?url=https://example.com"
+curl -s "http://localhost:8080/api/fingerprint?url=https://example.com"
+
+# Check robots.txt policy
+curl -s "http://localhost:8080/api/robots?url=https://example.com&path=/docs"
 ```
 
-## Repository layout
-
-```
-├─ engine/            Go engine (cleaner · extractor · fetcher · chunker · server)
-│  └─ cmd/{glassparse,server}/main.go
-├─ python/            Async SDK + RAG vector exporters
-│  ├─ glassparse/{client,models,vector}.py
-│  └─ examples/rag_pipeline.py
-├─ desktop/           Kotlin · Compose Multiplatform glass dashboard
-└─ docker-compose.yml engine + Qdrant
-```
+---
 
 ## Python SDK
 
-Two-line creed:
+### Install
+
+```bash
+pip install -e "python[rag]"    # SDK + Qdrant + Chroma exporters
+```
+
+### Usage
 
 ```python
 import asyncio
 from glassparse import Client
 
-result = asyncio.run(Client().parse("https://example.com"))
-print(result.page.metadata.title)      # parsed metadata
-print(result.prices())                 # extracted prices
+async def main():
+    async with Client() as c:
+        result = await c.parse("https://example.com")
+        print(result.page.metadata.title)   # page title
+        print(result.prices())               # extracted prices
+        print(len(result.chunks))            # RAG chunk count
+
+asyncio.run(main())
 ```
 
-Install:
+### Convenience Methods
 
-```bash
-pip install -e "python[rag]"            # SDK + Qdrant + Chroma exporters
+```python
+md     = await client.fetch_markdown(url)            # clean Markdown
+text   = await client.main_text(url)                 # article prose
+pages  = await client.crawl_site(root, max_pages=20) # whole-site crawl
+result.to_json("out.json")                            # export
+result.to_jsonl("chunks.jsonl")                       # JSONL export
 ```
 
-## RAG → vector DB
-
-Export chunks straight into **Qdrant** or **ChromaDB** (hash-embedder built in,
-swap in `sentence-transformers` / OpenAI / Ollama):
+### RAG → Vector DB
 
 ```python
 from glassparse import export_to_qdrant, search_qdrant, hash_embedder
 
 embed = hash_embedder(384)
 export_to_qdrant(result.chunks, "my-collection", embedder_func=embed)
-hits = search_qdrant("how much does the deluxe plan cost?", "my-collection",
-                     embedder_func=embed, limit=5)   # ranked SearchHit list
+hits = search_qdrant("pricing", "my-collection", embedder_func=embed, limit=5)
+for h in hits:
+    print(round(h.score, 3), h.url, h.text[:60])
 ```
 
-Full end-to-end example (parse → chunk → load):
+---
 
-```bash
-docker compose up -d --build
-python python/examples/rag_pipeline.py --url https://example.com --store qdrant
-```
-
-## HTTP API
-
-Docker / `go run ./cmd/server` serves the engine over HTTP:
-
-| Method | Endpoint            | Purpose                                             |
-|--------|---------------------|-----------------------------------------------------|
-| POST   | `/api/parse`        | clean + extract + chunk one page (JSON envelope)    |
-| POST   | `/api/crawl`        | crawl a site (robots.txt aware) → pages             |
-| GET    | `/api/main-text`    | dominant prose of a page (readability)              |
-| GET    | `/api/robots`       | robots.txt policy: `allowed`, `crawl_delay`, sitemaps |
-| GET    | `/api/fingerprint`  | stable content hash for change-detection / dedupe   |
-| GET    | `/api/healthz`      | liveness probe                                      |
-
-```bash
-curl -s -X POST "http://localhost:8080/api/parse?url=https://example.com"
-curl -s "http://localhost:8080/api/main-text?url=https://example.com"
-curl -s -X POST "http://localhost:8080/api/crawl?url=https://example.com&max_pages=20"
-```
-
-## Python SDK
-
-Two-line creed:
-
-```python
-import asyncio
-from glassparse import Client
-
-result = asyncio.run(Client().parse("https://example.com"))
-print(result.page.metadata.title)      # parsed metadata
-print(result.prices())                 # extracted prices
-```
-
-Conveniences on top of the two-liner:
-
-```python
-md     = await client.fetch_markdown(url)          # clean Markdown, no envelope
-text   = await client.main_text(url)               # article prose (readability)
-pages  = await client.crawl_site(root, max_pages=20)       # whole-site crawl
-prices = result.prices() / result.emails() / result.words() # quick filters
-result.to_json("out.json")  /  result.to_jsonl("chunks.jsonl")  # export
-```
-
-Install:
-
-```bash
-pip install -e "python[rag]"            # SDK + Qdrant + Chroma exporters
-```
-
-## Zero-config CLI
+## Zero-Config CLI
 
 ```bash
 python -m glassparse https://example.com --markdown
@@ -158,255 +161,162 @@ python -m glassparse https://example.com --pretty --out result.json
 python -m glassparse crawl https://site.example --max-pages 20 --out pages.json
 ```
 
-## Desktop dashboard
+---
 
-Kotlin + Compose Multiplatform with a strict premium **Glassmorphism** design:
-deep Indigo/Space-Gray/Purple gradient, frosted `GlassCard` panes, thin glowing
-1 px borders, neon accents, **Parse / Crawl tabs**, a site crawler panel, live
-latency & DOM-reduction bars and a Markdown / RAG-chunk viewer.
+## Desktop Dashboard
+
+Kotlin + Compose Multiplatform with a glassmorphism design: deep Indigo/Space-Gray/Purple gradient, frosted `GlassCard` panes, neon accents, Parse/Crawl tabs, site crawler panel, live latency & DOM-reduction bars, and a Markdown / RAG-chunk viewer.
 
 ```bash
 cd desktop && ./gradlew run
 ```
 
-## Features
+---
 
-- 🧹 **Hybrid DOM Cleaner** — strips scripts/styles/SVG/ads/nav/cookie-banners;
-  emits token-efficient Markdown + semantic HTML (word-boundary safe).
-- 🔁 **Self-Healing Selector Engine** — scores blocks by text density + tokens +
-  DOM-path (not CSS classes), so it keeps extracting after a redesign.
-- 📚 **Smart RAG-Chunker** — heading-aware chunks with provenance metadata,
-  ready for ChromaDB / Qdrant / **JSONL** (`/api`, `ExportJSONL`).
-- 🕸 **Site Crawler** — concurrent, robots.txt-aware, same-host BFS crawl with
-  fingerprint dedupe (feed it to chunk → vector).
-- 🎯 **Main-Text & Fingerprints** — readability prose extraction, layout-stable
-  content hashing for change detection.
-- 🛡 **Anti-Bot & Dynamic Content** — UA rotation, proxy support, transparent
-  HTTP→headless switch for SPA/React/Vue.
-- 🎨 **Glass Dashboard** — tabs, live JSON tree, Markdown editor, crawler panel,
-  chunk list, charts.
+## Project Structure
 
-## Tests
-
-```bash
-cd engine && go test ./... && go vet ./...   # cleaner/extractor/fetcher(+robots)/crawler/chunker/server
-cd python && pytest -q                        # incl. Qdrant & Chroma in-memory round-trips + retrieval
-cd desktop && ./gradlew test
 ```
-
-CI runs all three suites on every push (see `.github/workflows/ci.yml`).
+glassparse-ai/
+├── engine/                          Go engine
+│   ├── cmd/server/                  HTTP API server (graceful shutdown)
+│   ├── cmd/glassparse/              CLI entry point
+│   ├── internal/
+│   │   ├── cleaner/                 DOM pruning + Markdown/HTML rendering
+│   │   ├── extractor/               Self-healing extraction + readability + fingerprints
+│   │   ├── fetcher/                 Anti-bot fetch + robots.txt
+│   │   ├── crawler/                 Concurrent, robots-aware site crawler
+│   │   └── chunker/                 RAG chunking + JSONL export
+│   └── pkg/model/                   Shared wire types
+├── python/                          Async SDK + CLI + RAG exporters
+│   ├── glassparse/                  Client, models, vector, CLI
+│   ├── examples/                    rag_pipeline.py
+│   └── tests/                       pytest suite
+├── desktop/                         Kotlin / Compose Multiplatform GUI
+├── docker-compose.yml               Engine + Qdrant
+└── .github/workflows/ci.yml         Three-stage CI (Go, Python, Kotlin)
+```
 
 ---
 
-## Developer guide
+## Architecture
 
-Everything you need to build, run, debug and extend GlassParse AI locally.
+### Go Engine Pipeline
 
-### 1. Prerequisites
+```
+Request → Fetcher (HTTP/headless) → Cleaner (DOM prune → Markdown)
+       → Extractor (self-healing entities) → Chunker (H1–H4 aware chunks)
+       → JSON Response
+```
 
-| Tool           | Min version | Why                                          |
-|----------------|-------------|----------------------------------------------|
-| [Go](https://go.dev)     | 1.22        | Engine (fetcher, cleaner, extractor, chunker, crawler, server) |
-| [Python](https://python.org) | 3.11   | Async SDK, CLI, RAG exporters/retrievers |
-| [JDK](https://adoptium.net)   | 21       | Compose Desktop GUI (Kotlin)                 |
-| [Docker](https://docker.com)  | 20+      | One-command stack (engine + Qdrant)          |
+Each stage is **stateless and goroutine-safe** — instances are created per request. The engine uses only `net/http` stdlib for the server, with `goquery` for DOM parsing.
 
-Optional: an LLM/embedding service if you swap the hash embedder for
-`sentence-transformers`, OpenAI or Ollama in production.
+### Key Design Decisions
 
-### 2. Clone & quick start
+- **Self-healing extraction**: Scores content blocks by text density, token count, and DOM path depth — not CSS class names. Survives full site redesigns.
+- **Heading-aware chunking**: Splits on H1–H4 boundaries, preserving parent heading context in each chunk's metadata for retrieval.
+- **Graceful shutdown**: SIGINT/SIGTERM drains in-flight requests with a 10s timeout.
+
+---
+
+## Development
+
+### Prerequisites
+
+| Tool | Min Version | Purpose |
+|---|---|---|
+| [Go](https://go.dev) | 1.22 | Engine |
+| [Python](https://python.org) | 3.11 | SDK + CLI |
+| [JDK](https://adoptium.net) | 21 | Desktop GUI |
+| [Docker](https://docker.com) | 20+ | One-command stack |
+
+### Build & Run
 
 ```bash
-git clone https://github.com/<you>/glassparse-ai && cd glassparse-ai
-
-# Fastest: whole stack (engine + Qdrant) in one command
-docker compose up -d --build          # engine on :8080, Qdrant on :6333
-curl -s http://localhost:8080/api/healthz     # => {"status":"ok"}
-
-# Or run the engine directly from source (no Docker)
+# Engine (from source)
 cd engine && go run ./cmd/server -addr 127.0.0.1:8080
+
+# Python SDK
+cd python && pip install -e ".[dev]"
+python -m glassparse https://example.com --markdown
+
+# Desktop
+cd desktop && ./gradlew run
 ```
 
-### 3. Run the engine
+### Docker
 
 ```bash
-cd engine
-go build -o bin/server ./cmd/server
-
-./bin/server -addr 127.0.0.1:8080            # default listen address
-./bin/server -addr 0.0.0.0:8080 -proxy http://my-proxy:3128
+docker compose up -d --build           # engine on :8080, Qdrant on :6333
+docker build -f engine/Dockerfile -t glassparse-engine:latest .  # standalone image
 ```
 
-- Graceful shutdown on `SIGINT`/`SIGTERM` (Ctrl-C, `docker stop`).
-- Build a static, non-root, ~18 MB image with `docker build -f engine/Dockerfile engine`.
+---
 
-Endpoints — see the [HTTP API table](#http-api):
+## Testing
 
-```bash
-# parse one page (clean + extract + chunk)
-curl -s -X POST 'http://localhost:8080/api/parse?url=https://example.com'
-
-# crawl a site (robots.txt-aware)
-curl -s -X POST 'http://localhost:8080/api/crawl?url=https://example.com&max_pages=20'
-
-# readability prose + content hash
-curl -s 'http://localhost:8080/api/main-text?url=https://example.com'
-curl -s 'http://localhost:8080/api/fingerprint?url=https://example.com'
-curl -s 'http://localhost:8080/api/robots?url=https://example.com&path=/docs'
-```
-
-### 4. Install the Python SDK
-
-```bash
-cd python
-python -m venv .venv && source .venv/bin/activate   # (Windows: .venv\Scripts\activate)
-pip install -e ".[dev]"                             # SDK + test/QA toolchain
-pip install -e ".[rag]"                             #   + Qdrant & Chroma
-```
-
-Use the CLI immediately:
-
-```bash
-python -m glassparse https://www.iana.org/help/example-domains --markdown
-python -m glassparse https://example.com --pretty --out result.json
-python -m glassparse crawl https://example.com --max-pages 10 --out pages.json
-```
-
-The console entry point `glassparse` is also installed by `[dev]`.
-
-### 5. Programmatic SDK
-
-```python
-import asyncio
-from glassparse import Client, export_to_qdrant, search_qdrant, hash_embedder
-
-async def main():
-    async with Client(base_url="http://127.0.0.1:8080/api/parse") as c:
-        r = await c.parse("https://example.com")
-        print(r.page.metadata.title, r.prices(), len(r.chunks))
-
-        embed = hash_embedder(384)                    # zero-dependency embedder
-        export_to_qdrant(r.chunks, "docs", embedder_func=embed)   # -> Qdrant
-        hits = search_qdrant("pricing", "docs", embedder_func=embed)
-        for h in hits:
-            print(round(h.score, 3), h.url, h.text[:60])
-
-asyncio.run(main())
-```
-
-### 6. Run & extend the Desktop app
-
-```bash
-cd desktop
-./gradlew run                                     # dev run
-./gradlew packageDistributionForCurrentOS         # native bundle
-./gradlew test                                    # Kotlin tests
-```
-
-UI source lives in `desktop/src/main/kotlin/io/glassparse/dashboard/`
-(`ui/App.kt`, `ui/GlassCard.kt`, `ui/Theme.kt`, `data/EngineClient.kt`).
-The app talks to the engine on `127.0.0.1:8080`; change `baseUrl` in
-`EngineClient.kt` to point elsewhere.
-
-### 7. Configuration reference
-
-| Option | Where | Default | Meaning |
-|--------|-------|---------|---------|
-| `-addr` | engine flags | `127.0.0.1:8080` | HTTP listen address |
-| `-proxy` | engine flags | —           | upstream proxy (UA rotation still applies) |
-| `base_url` | `Client(...)` | `http://127.0.0.1:8080/api/parse` | engine endpoint |
-| `engine_bin` | `Client(...)` | auto | run a local Go binary instead of HTTP |
-| `timeout` | `Client(...)` | `60.0` s | request timeout |
-| `docker-compose.yml` | compose | — | service ports / volumes / healthchecks |
-
-### 8. Project layout
-
-```
-engine/                  Go engine
-  cmd/server/            HTTP API server (graceful shutdown)
-  cmd/glassparse/        CLI entry point
-  internal/cleaner/      pruning + Markdown/HTML rendering
-  internal/extractor/    self-healing extraction + readability + fingerprints
-  internal/fetcher/      anti-bot fetch + robots.txt
-  internal/crawler/      concurrent, robots-aware site crawler
-  internal/chunker/      RAG chunking + JSONL export
-  pkg/model/             shared wire types
-python/
-  glassparse/            SDK (client, models, vector, __main__ CLI)
-  examples/              rag_pipeline.py and friends
-  tests/                 pytest suite
-desktop/                 Kotlin / Compose Multiplatform GUI
-docker-compose.yml       engine + Qdrant
-.github/workflows/ci.yml three-stage CI
-```
-
-### 9. Testing & reliability
-
-The project ships with deliberately broad tests; every layer is covered:
-
-**Engine (Go) — `go test ./... -race`**
-- `cleaner`: pruning, DOM shrink, inline word-boundary safety.
-- `extractor`: prose extraction, links, stable/sensitive fingerprints.
-- `fetcher`: anti-bot + `robots.txt` (groups, wildcards, `$` anchors,
-  crawl-delay, sitemaps).
-- `crawler`: discovery, dedupe, `MaxPages` budget, robots honour, canonical
-  URL normalisation.
-- `chunker`: heading-aware chunks, JSONL round-trip / byte-exact export.
-- `server`: full HTTP API driven against an in-memory fake upstream
-  (parse / main-text / robots / fingerprint / crawl) — no external network.
+### Go (Engine)
 
 ```bash
 cd engine && go test ./... -count=1 -race
 ```
 
-**SDK (Python) — `pytest`**
-- Models, serialization (`to_json`, `to_jsonl`), content helpers.
-- Client against a **mock transport** (URL mapping, crawl/main-text/export).
-- RAG: real in-memory **Qdrant** and **Chroma** insert→iterate/search round-trips.
+Covers: cleaner (pruning, DOM shrink, word-boundary safety), extractor (prose, links, fingerprints), fetcher (anti-bot + robots.txt), crawler (discovery, dedupe, MaxPages, robots), chunker (heading-aware chunks, JSONL round-trip), server (full HTTP API against in-memory fakes — no external network).
+
+### Python (SDK)
 
 ```bash
-cd python && pip install -e ".[dev]" && pytest
+cd python && pytest -q
 ```
 
-**Pro tips**
-- Use `go test -race` to catch data races in the crawler (it is concurrent).
-- `pytest --cov=glassparse` for coverage (pytest-cov is in `[dev]`).
-- CI runs every suite on each push/PR; fix any red before merging.
+Covers: models, serialization, client (mock transport), RAG round-trips (in-memory Qdrant + Chroma).
 
-### 10. Extending
-
-- **New engine endpoint**: add a `Handler` method in `engine/cmd/server/main.go`,
-  register it on the `mux`, then add a matching test in `main_test.go` and an
-  SDK helper in `python/glassparse/client.py` (with a mock-transport test).
-- **New backend**: mirror `export_to_qdrant`/`search_qdrant` in
-  `glassparse/vector.py`; add it to `__all__` and `__init__.py`.
-- **Self-healing**: everything is stateless & goroutine-safe; new extractors
-  only need to emit `model.Entity` with a `Confidence`.
-- Keep the wire models in `engine/pkg/model` and `python/glassparse/models.py`
-  in sync; the dashboard DTOs live in `desktop/.../data/Models.kt`.
-
-### 11. Release / build hygiene
+### Desktop (Kotlin)
 
 ```bash
-# engine (static, non-root, tiny)
-docker build -f engine/Dockerfile -t glassparse-engine:latest .
-
-# wheel
-cd python && python -m build
-
-# desktop installer
-cd desktop && ./gradlew packageDistributionForCurrentOS
+cd desktop && ./gradlew test
 ```
-
-Run `go vet ./...` and `git grep -n TODO` before committing; never commit
-secrets (put keys in env vars or Docker secrets).
 
 ---
 
-## Roadmap ideas
-- HTTP+headless browser strategy tuned per-site via a rules engine.
-- Streaming crawl → chunk → embed (no full-site memory hold).
-- Plugin scene: custom heuristics written by users (Python or WASM).
+## CI/CD
+
+Three-stage pipeline on every push/PR (`.github/workflows/ci.yml`):
+
+| Stage | Runner | Steps |
+|---|---|---|
+| Engine (Go) | ubuntu-latest | `go build` → `go vet` → `go test` |
+| SDK (Python) | ubuntu-latest | `pip install` → `pytest` |
+| Desktop (Kotlin) | ubuntu-latest | `gradle compileKotlin` |
+
+---
+
+## Configuration
+
+| Option | Where | Default | Description |
+|---|---|---|---|
+| `-addr` | Engine flag | `127.0.0.1:8080` | HTTP listen address |
+| `-proxy` | Engine flag | — | Upstream proxy (UA rotation still applies) |
+| `base_url` | `Client(...)` | `http://127.0.0.1:8080/api/parse` | Engine endpoint |
+| `engine_bin` | `Client(...)` | auto | Run local Go binary instead of HTTP |
+| `timeout` | `Client(...)` | `60.0` s | Request timeout |
+
+---
+
+## Extending
+
+- **New endpoint**: add a `Handler` method in `engine/cmd/server/main.go`, register on the mux, add tests in `main_test.go`, add SDK helper in `python/glassparse/client.py`.
+- **New vector backend**: mirror `export_to_qdrant` in `python/glassparse/vector.py`, add to `__all__` and `__init__.py`.
+- **Custom extractors**: stateless & goroutine-safe — emit `model.Entity` with a `Confidence` score.
+
+---
+
+## Roadmap
+
+- HTTP + headless browser strategy tuned per-site via a rules engine
+- Streaming crawl → chunk → embed (no full-site memory hold)
+- Plugin system: custom heuristics written by users (Python or WASM)
+
+---
 
 ## License
 
