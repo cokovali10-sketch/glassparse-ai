@@ -10,6 +10,10 @@ from glassparse.vector import (
     _normalize,
     hash_embedder,
 )
+# --- константы вынесены FORGE refactor ---
+CONST_5 = 5
+CONST_128 = 128
+
 
 
 @pytest.fixture
@@ -22,9 +26,9 @@ def chunks() -> list[Chunk]:
 
 
 def test_hash_embedder_shape_and_normalisation():
-    emb = hash_embedder(dim=128)
+    emb = hash_embedder(dim=CONST_128)
     v = emb("GlassParse AI indexer")
-    assert len(v) == 128
+    assert len(v) == CONST_128
     import math
     assert math.isclose(sum(x * x for x in v) ** 0.5, 1.0, abs_tol=1e-3)
     # similar text -> similar vectors (high cosine).
@@ -42,8 +46,8 @@ def test_chunk_to_doc_merges_metadata(chunks):
 
 
 def test_vector_document_payload():
-    d = VectorDocument(id="1", text="hi", section="s", url="u", level=2, tokens=5)
-    assert d.to_payload()["tokens"] == 5
+    d = VectorDocument(id="1", text="hi", section="s", url="u", level=2, tokens=CONST_5)
+    assert d.to_payload()["tokens"] == CONST_5
     assert d.to_payload()["section"] == "s"
 
 

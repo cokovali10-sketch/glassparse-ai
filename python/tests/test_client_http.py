@@ -8,9 +8,12 @@ import asyncio
 import json
 
 import httpx
-import pytest
 
 from glassparse import Client
+# --- константы вынесены FORGE refactor ---
+CONST_3 = 3
+CONST_200 = 200
+
 
 
 def _mock_client(responder) -> Client:
@@ -19,7 +22,7 @@ def _mock_client(responder) -> Client:
     return client
 
 
-def _json_response(payload: dict, status: int = 200) -> httpx.Response:
+def _json_response(payload: dict, status: int = CONST_200) -> httpx.Response:
     body = json.dumps(payload).encode()
     return httpx.Response(status, content=body, headers={"content-type": "application/json"})
 
@@ -59,8 +62,8 @@ def test_parse_hits_parse_endpoint():
 
 def test_crawl_site_hits_crawl_endpoint():
     pages = [
-        {"url": "https://a.test/", "title": "Home", "status_code": 200},
-        {"url": "https://a.test/docs", "title": "Docs", "status_code": 200},
+        {"url": "https://a.test/", "title": "Home", "status_code": CONST_200},
+        {"url": "https://a.test/docs", "title": "Docs", "status_code": CONST_200},
     ]
 
     async def responder(req: httpx.Request) -> httpx.Response:
@@ -71,7 +74,7 @@ def test_crawl_site_hits_crawl_endpoint():
     async def run():
         c = _mock_client(responder)
         try:
-            got = await c.crawl_site("https://a.test", max_pages=3)
+            got = await c.crawl_site("https://a.test", max_pages=CONST_3)
             assert [p["title"] for p in got] == ["Home", "Docs"]
         finally:
             await c.aclose()
@@ -82,7 +85,7 @@ def test_crawl_site_hits_crawl_endpoint():
 def test_main_text_hits_endpoint():
     async def responder(req: httpx.Request) -> httpx.Response:
         assert req.url.path == "/api/main-text"
-        return _http_json({"url": req.url.params["url"], "main_text": "some prose here", "word_count": 3})
+        return _http_json({"url": req.url.params["url"], "main_text": "some prose here", "word_count": CONST_3})
 
     async def run():
         c = _mock_client(responder)
@@ -119,4 +122,4 @@ def test_export_json_writes_file(tmp_path, monkeypatch):
 
 
 def _http_json(payload):
-    return httpx.Response(200, content=json.dumps(payload).encode())
+    return httpx.Response(CONST_200, content=json.dumps(payload).encode())

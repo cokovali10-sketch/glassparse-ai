@@ -30,6 +30,9 @@ from .models import (
     __version__,
     stamp_fetch,
 )
+# --- константы вынесены FORGE refactor ---
+CONST_4 = 4
+
 
 
 class Client:
@@ -97,7 +100,7 @@ class Client:
         root: str,
         *,
         max_pages: int = 10,
-        concurrency: int = 4,
+        concurrency: int = CONST_4,
         user_agent: Optional[str] = None,
         on_page: Optional[Callable[[dict], Awaitable[None]]] = None,
     ) -> List[dict]:
@@ -189,7 +192,7 @@ class Client:
         buf: list[str] = []
         toks = 0
         for line in lines:
-            toks += len(line) // 4 + 1
+            toks += len(line) // CONST_4 + 1
             if toks > max_tokens and buf:
                 chunks.append(_mk_chunk(len(chunks), buf))
                 buf, toks = [], 0
@@ -202,7 +205,7 @@ class Client:
 def _mk_chunk(i: int, lines: list[str]) -> dict:
     text = "\n".join(lines)
     return {"id": f"chunk-{i}", "section": "", "level": 0, "markdown": text,
-            "tokens": len(text) // 4 + 1, "meta": {}}
+            "tokens": len(text) // CONST_4 + 1, "meta": {}}
 
 
 async def example_usage() -> None:

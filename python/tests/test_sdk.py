@@ -16,6 +16,11 @@ from glassparse.vector import (
     query_chroma,
     search_qdrant,
 )
+# --- константы вынесены FORGE refactor ---
+CONST_9 = 9
+CONST_64 = 64
+CONST_200 = 200
+
 
 
 @pytest.fixture
@@ -23,7 +28,7 @@ def result() -> ParseResult:
     return ParseResult(
         page=Page(
             url="https://acme.test",
-            status_code=200,
+            status_code=CONST_200,
             markdown=(
                 "# Intro\nGlassParse turns websites into structured data.\n\n"
                 "## Pricing\nA deluxe plan costs $12,499.00 per year.\n"
@@ -35,8 +40,8 @@ def result() -> ParseResult:
             {"type": "email", "value": "hi@acme.test", "confidence": 0.95},
         ],
         chunks=[
-            Chunk(id="chunk-0", section="Intro", level=1, markdown="Intro lines here with pricing words and data.", tokens=9, meta={"src": "https://acme.test"}),
-            Chunk(id="chunk-1", section="Pricing", level=1, markdown="Deluxe plan costs a lot but is profitable and good.", tokens=9, meta={"src": "https://acme.test"}),
+            Chunk(id="chunk-0", section="Intro", level=1, markdown="Intro lines here with pricing words and data.", tokens=CONST_9, meta={"src": "https://acme.test"}),
+            Chunk(id="chunk-1", section="Pricing", level=1, markdown="Deluxe plan costs a lot but is profitable and good.", tokens=CONST_9, meta={"src": "https://acme.test"}),
         ],
     )
 
@@ -44,7 +49,7 @@ def result() -> ParseResult:
 def test_to_dict_is_json_serialisable(result):
     blob = result.to_dict()
     assert json.dumps(blob)  # must not raise
-    assert blob["page"]["status_code"] == 200
+    assert blob["page"]["status_code"] == CONST_200
     assert blob["chunks"][0]["id"] == "chunk-0"
 
 
@@ -69,7 +74,7 @@ def test_content_helpers(result):
 
 
 def test_qdrant_roundtrip_search(result):
-    emb = hash_embedder(64)
+    emb = hash_embedder(CONST_64)
     client = _qdrant_mem()
     n = export_to_qdrant(result.chunks, "sdk-test-col", embedder_func=emb, client=client)
     assert n == 2
@@ -86,7 +91,7 @@ def _qdrant_mem():
 
 
 def test_chroma_roundtrip_search(result):
-    emb = hash_embedder(64)
+    emb = hash_embedder(CONST_64)
     export_to_chroma(result.chunks, "c-rt", embedder_func=emb, path=None)
     hits = query_chroma("deluxe plan", "c-rt", embedder_func=emb, path=None, n_results=2)
     assert len(hits) <= 2

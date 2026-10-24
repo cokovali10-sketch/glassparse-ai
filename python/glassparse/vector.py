@@ -20,6 +20,10 @@ import hashlib
 import math
 import re
 from typing import Any, Callable, List, Mapping, Optional, Sequence, TypeVar
+# --- константы вынесены FORGE refactor ---
+CONST_5 = 5
+CONST_6333 = 6333
+
 
 T = TypeVar("T")
 
@@ -111,7 +115,7 @@ def export_to_qdrant(
     embedder_func: Optional[EmbeddingFunc] = None,
     *,
     host: str = "localhost",
-    port: int = 6333,
+    port: int = CONST_6333,
     prefer_grpc: bool = False,
     batch_size: int = 128,
     distance: Optional[str] = None,
@@ -255,8 +259,8 @@ def search_qdrant(
     *,
     embedder_func: Optional[EmbeddingFunc] = None,
     host: str = "localhost",
-    port: int = 6333,
-    limit: int = 5,
+    port: int = CONST_6333,
+    limit: int = CONST_5,
     score_threshold: float = 0.0,
     client: Optional[Any] = None,
 ) -> List[SearchHit]:
@@ -299,7 +303,7 @@ def query_chroma(
     embedder_func: Optional[EmbeddingFunc] = None,
     path: Optional[str] = "~/.glassparse/chroma",
     settings: Optional[Any] = None,
-    n_results: int = 5,
+    n_results: int = CONST_5,
 ) -> List[SearchHit]:
     """Query a ChromaDB collection with a plain-text query.
 

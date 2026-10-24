@@ -6,6 +6,10 @@ import pytest
 
 from glassparse import hash_embedder
 from glassparse.models import Chunk
+# --- константы вынесены FORGE refactor ---
+CONST_12 = 12
+CONST_32 = 32
+
 
 qdrant = pytest.importorskip("qdrant_client")
 
@@ -16,7 +20,7 @@ def chunks() -> list[Chunk]:
         Chunk(id="chunk-0", section="Intro", markdown="# Intro\nGlassParse cleans HTML to markdown.",
               tokens=9, meta={"src": "https://x.test", "section": "Intro"}),
         Chunk(id="chunk-1", section="Install", markdown="## Install\npip install glassparse and run.",
-              tokens=12, meta={"src": "https://x.test"}),
+              tokens=CONST_12, meta={"src": "https://x.test"}),
     ]
 
 
@@ -25,7 +29,7 @@ def test_qdrant_inmemory_roundtrip(chunks):
     from glassparse.vector import export_to_qdrant
 
     client = QdrantClient(":memory:")
-    uploaded = export_to_qdrant(chunks, "pages", embedder_func=hash_embedder(32), client=client)
+    uploaded = export_to_qdrant(chunks, "pages", embedder_func=hash_embedder(CONST_32), client=client)
     assert uploaded == 2
 
     points = client.scroll(collection_name="pages", limit=10)[0]
@@ -40,11 +44,11 @@ def test_qdrant_inmemory_roundtrip(chunks):
     uuid0 = str(uuid.uuid5(uuid.NAMESPACE_URL, "chunk-0"))
     uuid1 = str(uuid.uuid5(uuid.NAMESPACE_URL, "chunk-1"))
     assert metas[uuid0]["url"] == "https://x.test"
-    assert metas[uuid1]["tokens"] == 12
+    assert metas[uuid1]["tokens"] == CONST_12
     # Query with the same embedder returns the closest chunk first.
     hits = client.query_points(
         collection_name="pages",
-        query=hash_embedder(32)("install pip"),
+        query=hash_embedder(CONST_32)("install pip"),
         limit=1,
     ).points
     assert hits and hits[0].payload["section"] == "Install"
@@ -53,7 +57,7 @@ def test_qdrant_inmemory_roundtrip(chunks):
 def test_chroma_in_memory_roundtrip(chunks):
     from glassparse.vector import export_to_chroma
 
-    added = export_to_chroma(chunks, "pages", embedder_func=hash_embedder(32), path=None)
+    added = export_to_chroma(chunks, "pages", embedder_func=hash_embedder(CONST_32), path=None)
     assert added == 2
 
     import chromadb

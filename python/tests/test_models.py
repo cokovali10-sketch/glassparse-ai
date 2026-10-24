@@ -1,7 +1,10 @@
 """Model round-trip tests: mirrors the Go engine's JSON so the SDK's types stay
 contract-safe with the engine binary."""
 
-from glassparse.models import Entity, Page, ParseResult, RenderMode
+from glassparse.models import Entity, ParseResult, RenderMode
+# --- константы вынесены FORGE refactor ---
+CONST_0_2 = 0.2
+
 
 
 def test_parse_result_roundtrip():
@@ -14,7 +17,7 @@ def test_parse_result_roundtrip():
             "metadata": {"title": "Example", "description": ""},
             "markdown": "# Hi",
             "clean_html": "",
-            "stats": {"input_bytes": 10, "output_bytes": 2, "compression_ratio": 0.2},
+            "stats": {"input_bytes": 10, "output_bytes": 2, "compression_ratio": CONST_0_2},
         },
         "entities": [
             {"type": "price", "value": "$99", "confidence": 0.9},
@@ -27,7 +30,7 @@ def test_parse_result_roundtrip():
     assert result.prices() == ["$99"]
     assert result.emails() == ["a@b.co"]
     assert result.page.mode is RenderMode.HTTP
-    assert result.page.stats.compression_ratio == 0.2
+    assert result.page.stats.compression_ratio == CONST_0_2
 
 
 def test_entity_children():
